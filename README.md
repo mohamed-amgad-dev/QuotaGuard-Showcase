@@ -14,15 +14,29 @@
 
 ## Live Demo & Visual Showcase
 
-> **Demo Video:** *[Upload your 60–90s recorded walkthrough MP4/GIF or YouTube Unlisted link here]*
+> **Interactive Walkthrough Video (37s, 720×1600, 4.63 MB):** [Watch Demo Recording (`quotaguard_demo.mp4`)](./screenshots/quotaguard_demo.mp4)  
+> *Demonstrates Daylight Light Mode → Live Switch to Neutral Carbon Dark Mode → Admin Quota Telemetry → Member Speed Throttling Controls → AI Assistant → Outside-Home-Network Safe Suspension.*
 
-### Precision Utility UI (Daylight & Neutral Carbon Dark Mode)
+### Core Admin & Member Flows (Daylight & Neutral Carbon UI)
 
-| Role Selection (Light) | Role Selection (Dark) | Admin Quota Dashboard | Member Live Enforcement |
+| Role Selection (Light) | Role Selection (Dark) | Admin Quota Dashboard | Instant Controls & Top Apps |
 | :---: | :---: | :---: | :---: |
-| *Add `screenshots/01_role_light.png`* | *Add `screenshots/02_role_dark.png`* | *Add `screenshots/03_admin_group.png`* | *Add `screenshots/04_member_view.png`* |
+| <img src="./screenshots/01_role_light.png" width="210" alt="Role Selection Light Mode"/> | <img src="./screenshots/02_role_dark.png" width="210" alt="Role Selection Dark Mode"/> | <img src="./screenshots/03_admin_group_dark.png" width="210" alt="Admin Quota Dashboard"/> | <img src="./screenshots/07_member_controls_dark.png" width="210" alt="Instant Controls and Top Apps"/> |
 
-*(See [`screenshots/CAPTURE_GUIDE.md`](./screenshots/CAPTURE_GUIDE.md) for the exact shot list and demo recording script.)*
+### Real-Time Bandwidth Shaping, AI Diagnostics & Outside-Network Guard
+
+| Speed Throttling (`64 Kbps – 5 Mbps`) | Tiered Speed Policy Guide | AI Quota Diagnostics (`Gemini`) | Zero Outside Interference Guard |
+| :---: | :---: | :---: | :---: |
+| <img src="./screenshots/08_throttle_dialog_dark.png" width="210" alt="Speed Throttling Dialog"/> | <img src="./screenshots/09_speed_guide_dark.png" width="210" alt="Tiered Speed Policy Guide"/> | <img src="./screenshots/05_ai_dark.png" width="210" alt="Gemini AI Quota Assistant"/> | <img src="./screenshots/05_family_dark.png" width="210" alt="Zero Outside Interference Alert"/> |
+
+<details>
+<summary>More Screens: Light Admin View, Member Telemetry Chart & Create Group Dialog</summary>
+
+| Admin Dashboard (Light) | Member Hourly Telemetry | Create Group Modal |
+| :---: | :---: | :---: |
+| <img src="./screenshots/06_admin_group_light.png" width="210" alt="Admin Dashboard Light Mode"/> | <img src="./screenshots/04_member_dark.png" width="210" alt="Member Telemetry Chart"/> | <img src="./screenshots/06_dialog_dark.png" width="210" alt="Create Group Dialog"/> |
+
+</details>
 
 ---
 
@@ -67,6 +81,16 @@ flowchart LR
 
 ### 6. Built-In AI Network Assistant (`AiChatActivity` + `AiKeySecurityManager`)
 * Integrates Gemini AI (`generativeai`) with local `AES/GCM/NoPadding` key encryption (`AiKeySecurityManager`) for quota diagnostics and policy guidance.
+
+---
+
+## Android OS Constraints & Architectural Trade-Offs
+
+Building non-root network governance on Android 10–16 requires explicit engineering around OS boundaries rather than assuming kernel-level router control:
+
+* **Wi-Fi Suggestion Lifecycle vs. Immediate Sever:** Android 10+ `WifiManager` `WifiNetworkSuggestion` add/remove operations are asynchronous at the OS level and typically take ~30–60 seconds for system re-association. When revoking access or enforcing missing Usage Access / VPN consent, `QuotaEnforcementEngine` flushes the tamper alert to Firebase *before* severing Wi-Fi (`reportTamperAndDisconnectWifi`) and debounces sever/restore transitions so background workers never oscillate the radio link.
+* **Critical Permissions vs. OEM Battery Quirks:** Aggressive vendor battery managers (Xiaomi/Oppo/Vivo/Huawei) can reset or misreport battery exemptions. Critical enforcement triggers strictly on `UsageStats` + `VpnService` revocation for enrolled members (`evaluatePermissionGate`), while battery exemptions surface non-destructively alongside `AlarmManager.setAlarmClock` watchdogs and cloud-side `AdminRadarWatcher` wakeup monitoring.
+* **Private-Network Exception Handling:** Rather than polling continuously off-network, `NetworkFingerprintManager` suspends local tunneling outside the registered home router fingerprint so mobile data and public hotspots remain completely unaffected.
 
 ---
 
